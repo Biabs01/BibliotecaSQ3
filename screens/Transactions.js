@@ -2,6 +2,7 @@ import React, {Component} from 'react';
 import {View, Text, StyleSheet, TextInput, TouchableOpacity} from 'react-native';
 import * as Permissions from 'expo-permissions';
 import { BarCodeScanner } from 'expo-barcode-scanner';
+import db from './config.js';
 
 export default class TransactionsScreen extends Component{
     constructor(props){
@@ -41,6 +42,10 @@ export default class TransactionsScreen extends Component{
                 scanned: true
             });
         }
+    }
+
+    handleTransaction = () => {
+        
     }
 
     render(){
@@ -91,6 +96,12 @@ export default class TransactionsScreen extends Component{
                             </Text>
                         </TouchableOpacity>
                     </View>
+                    <TouchableOpacity
+                        style={[styles.scanbutton, {marginTop: 25}]}
+                        onPress={this.handleTransaction}
+                    >
+                        <Text style={styles.scanbuttonText}>Enviar</Text>
+                    </TouchableOpacity>
                 </View>
             </View>
         )
