@@ -10,6 +10,8 @@ export default class TransactionsScreen extends Component{
         this.state = {
             bookId: '',
             studentId: '',
+            bookName: '',
+            studentName: '',
             domState: 'normal',
             hasCameraPermissions: null,
             scanned: false,
@@ -44,8 +46,78 @@ export default class TransactionsScreen extends Component{
         }
     }
 
-    handleTransaction = () => {
+    getBookDetails = async bookId => {
+        bookId = bookId.trim();
+        db.collection('books')
+            .where("book_id", "==", bookId)
+            .get()
+            .then(snapshot => {
+                snapshot.docs.map(doc => {
+                    this.setState({
+                        bookName: doc.data().book_details.book_name
+                    });
+                });
+            });
+    }
+
+    getStudentDetails = async studentId => {
+        studentId = studentId.trim();
+        db.collection('students')
+            .where("student_id", "==",studentId)
+            .get()
+            .then(snapshot => {
+                snapshot.docs.map(doc => {
+                    this.setState({
+                        studentName: doc.data().student_details.student_name
+                    });
+                });
+            });
+    }
+
+    initiateBookIssue = async (bookId, studentId, bookName, studentName) => {
+        db.collection("transactions").add({
+            student_id: studentId,
+            student_name: studentName,
+            book_id: bookId,
+            book_name: bookName,
+            date: firebase.firestore.Timestamp.now().toDate(),
+            tranction_type: "issue"
+        });
+
+        db.collection("books")
+            .doc(bookId)
+            .update({
+                is_book_avaibility: false
+            });
         
+        db.collection("students")
+            .doc(studentId)
+            .update({
+                number_of_books_issued: firebase.firestore.FieldValue.increment(1)
+            });
+
+        this.setState({
+            bookId: '',
+            studentId: ''
+        });
+    }
+
+    handleTransaction = async () => {
+        var {bookId, studentId} = this.state;
+        await this.getBookDetails(bookId);
+        await this.getStudentDetails(studentId);
+
+        db.collection('books')
+         .doc(bookId)
+         .get()
+         .then(doc => {
+            var book = doc.data();
+            if(is_book_avaibility){
+               var {bookName, studentName} = this.state;
+               this.initiateBookIssue(bookId, studentId, bookName, studentName);
+               Alert.alert("Livro entregue para o aluno!"); 
+            }
+         });
     }
 
     render(){
