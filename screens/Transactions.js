@@ -72,8 +72,8 @@ export default class TransactionsScreen extends Component{
                     });
                 });
             });
-    }
-
+    } 
+        
     initiateBookIssue = async (bookId, studentId, bookName, studentName) => {
         db.collection("transactions").add({
             student_id: studentId,
