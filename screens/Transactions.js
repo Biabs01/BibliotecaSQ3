@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import {View, Text, StyleSheet, TextInput, TouchableOpacity} from 'react-native';
+import {View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, KeyboardAvoidingView} from 'react-native';
 import * as Permissions from 'expo-permissions';
 import { BarCodeScanner } from 'expo-barcode-scanner';
 import db from './config.js';
@@ -102,6 +102,34 @@ export default class TransactionsScreen extends Component{
         });
     }
 
+    initiateBookReturn = async (bookId, studentId, bookName, studentName) => {
+        db.collection("transactions").add({
+            student_id: studentId,
+            student_name: studentName,
+            book_id: bookId,
+            book_name: bookName,
+            date: firebase.firestore.Timestamp.now().toDate(),
+            tranction_type: "return"
+        });
+
+        db.collection("books")
+            .doc(bookId)
+            .update({
+                is_book_avaibility: true
+            });
+        
+        db.collection("students")
+            .doc(studentId)
+            .update({
+                number_of_books_issued: firebase.firestore.FieldValue.increment(-1)
+            });
+
+        this.setState({
+            bookId: '',
+            studentId: ''
+        });
+    }
+
     handleTransaction = async () => {
         var {bookId, studentId} = this.state;
         await this.getBookDetails(bookId);
@@ -116,6 +144,10 @@ export default class TransactionsScreen extends Component{
                var {bookName, studentName} = this.state;
                this.initiateBookIssue(bookId, studentId, bookName, studentName);
                Alert.alert("Livro entregue para o aluno!"); 
+            } else {
+                var {bookName, studentName} = this.state;
+                this.initiateBookReturn(bookId, studentId, bookName, studentName);
+               Alert.alert("Livro retornado à biblioteca!");
             }
          });
     }
@@ -131,7 +163,7 @@ export default class TransactionsScreen extends Component{
             );
         }
         return(
-            <View style={styles.container}>
+            <KeyboardAvoidingView behavior='padding' style={styles.container}>
                 <Text style={styles.text}>
                     {hasCameraPermissions ? scannedData : "Solicitar permissão da Câmera"}
                 </Text>
@@ -175,7 +207,7 @@ export default class TransactionsScreen extends Component{
                         <Text style={styles.scanbuttonText}>Enviar</Text>
                     </TouchableOpacity>
                 </View>
-            </View>
+            </KeyboardAvoidingView>
         )
     }
 }
