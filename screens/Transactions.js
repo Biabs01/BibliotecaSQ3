@@ -180,7 +180,27 @@ export default class TransactionsScreen extends Component{
     }
 
     checkStudentAvailabilityForBookReturn = async (bookId, studentId) => {
-        
+        const transactionRef = await db
+            .collection("transactions")
+            .where("book_id", "==", bookId)
+            .limit(1)
+            .get()
+
+        isStudentEligible = '';
+        transactionRef.docs.map(doc => {
+            var lastBookTransaction = doc.data();
+            if(lastBookTransaction.student_id === studentId){
+                isStudentEligible = true;
+            } else {
+                isStudentEligible = false;
+                Alert.alert("O livro não foi retirado por este aluno!");
+                this.setState({
+                    bookId: '',
+                    studentId: ''
+                });
+            }
+        });
+        return isStudentEligible;
     }
 
     handleTransaction = async () => {
@@ -207,9 +227,13 @@ export default class TransactionsScreen extends Component{
             }
             
         } else {
-            var {bookName, studentName} = this.state;
-            this.initiateBookReturn(bookId, studentId, bookName, studentName);
-            Alert.alert("Livro retornado à biblioteca!");
+            var isEligible = await this.checkStudentAvailabilityForBookReturn(bookId, studentId);
+
+            if(isEligible){
+                var {bookName, studentName} = this.state;
+                this.initiateBookReturn(bookId, studentId, bookName, studentName);
+                Alert.alert("Livro retornado à biblioteca!");
+            }     
         }
     }
 
